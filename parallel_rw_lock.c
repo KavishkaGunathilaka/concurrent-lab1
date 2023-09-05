@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
     free(thread_handles);
 
     end_time = clock(); // Record the end time
-    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC; // Calculate time used in seconds
+    cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
     printf("CPU time used: %f seconds\n", cpu_time_used);
 
     pthread_rwlock_destroy(&list_rw_lock);
@@ -168,22 +168,29 @@ int Delete(int value, struct list_node_s** head_pp) {
 void* DoOperations(void* rank){
     long my_rank = (long) rank;
 
-    for (int i=0; i<num_member_each; i++){
-        pthread_rwlock_rdlock(&list_rw_lock);
-        Member(GetRandomNumber(), head_p);
-        pthread_rwlock_unlock(&list_rw_lock);
-    }
+    // Create arrays to store the functions and their respective counts
+    int (*functions[])() = {Member, Insert, Delete};
+    int counts[] = {0, 0, 0};
+    int num_each[] = {num_member_each, num_insert_each, num_delete_each};
+    
+    int totalCalls = num_member_each + num_insert_each + num_delete_each; // Set desired total number of calls
+    int remainingCalls = totalCalls;
 
-    for (int i=0; i<num_insert_each; i++){
-        pthread_rwlock_wrlock(&list_rw_lock);
-        Insert(GetRandomNumber(), &head_p);
-        pthread_rwlock_unlock(&list_rw_lock);
-    }
-
-    for (int i=0; i<num_delete_each; i++){
-        pthread_rwlock_wrlock(&list_rw_lock);
-        Delete(GetRandomNumber(), &head_p);
-        pthread_rwlock_unlock(&list_rw_lock);
+    while (remainingCalls > 0) {
+        // Generate a random index to select a function
+        int randomIndex = rand() % 3; // 3 is the number of functions
+        // Check if the selected function has been called enough times
+        if (counts[randomIndex] < num_each[randomIndex]) {
+            if (randomIndex == 0){
+                pthread_rwlock_rdlock(&list_rw_lock);
+            } else {
+                pthread_rwlock_wrlock(&list_rw_lock);
+            }
+            functions[randomIndex](GetRandomNumber(), &head_p); // Call the function
+            pthread_rwlock_unlock(&list_rw_lock);
+            counts[randomIndex]++;   // Increment the count
+            remainingCalls--;
+        }
     }
 
     return NULL;

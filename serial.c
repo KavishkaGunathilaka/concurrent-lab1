@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
     }
 
     end_time = clock(); // Record the end time
-    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC; // Calculate time used in seconds
+    cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
     printf("CPU time used: %f seconds\n", cpu_time_used);
 
     return 0;
