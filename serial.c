@@ -1,23 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <time.h>
 
 int thread_count;
 int n;
 int16_t m;
 float m_member, m_insert, m_delete;
 
-int16_t GetRandomNumber();
-
 struct list_node_s {
     int data;
     struct list_node_s* next;
 };
 
-int main(int argc, char* argv[]){
-    long thread;
-    pthread_t* thread_handles;
+int16_t GetRandomNumber();
+void PopulateList(struct list_node_s* head_p, int n);
+int Member(int value, struct list_node_s* head_p);
+int Insert(int value, struct list_node_s** head_pp);
+int Delete(int value, struct list_node_s** head_pp);
 
+int main(int argc, char* argv[]){
     srand(time(NULL));
 
     n = strtol(argv[1], NULL, 10);

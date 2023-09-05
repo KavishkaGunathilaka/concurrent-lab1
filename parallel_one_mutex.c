@@ -10,13 +10,16 @@ int num_member, num_insert, num_delete;
 int num_member_each, num_insert_each, num_delete_each;
 struct list_node_s* head_p ;
 
-void* DoOperations(void* rank);
-int16_t GetRandomNumber();
-
 struct list_node_s {
     int data;
     struct list_node_s* next;
 };
+
+void* DoOperations(void* rank);
+int16_t GetRandomNumber();
+void PopulateList(struct list_node_s* head_p, int n);
+int Member(int value, struct list_node_s** head_p);
+int Insert(int value, struct list_node_s** head_pp);
 
 pthread_mutex_t list_mutex;
 
@@ -166,8 +169,6 @@ int Delete(int value, struct list_node_s** head_pp) {
 }
 
 void* DoOperations(void* rank){
-    long my_rank = (long) rank;
-
     // Create arrays to store the functions and their respective counts
     int (*functions[])() = {Member, Insert, Delete};
     int counts[] = {0, 0, 0};
