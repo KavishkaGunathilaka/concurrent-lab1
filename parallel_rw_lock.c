@@ -15,6 +15,7 @@ struct list_node_s {
     struct list_node_s* next;
 };
 
+void RunPrograme(int num_threads);
 void* DoOperations(void* rank);
 int16_t GetRandomNumber();
 void PopulateList(struct list_node_s* head_p, int n);
@@ -22,32 +23,24 @@ int Member(int value, struct list_node_s** head_p);
 int Insert(int value, struct list_node_s** head_pp);
 
 pthread_rwlock_t list_rw_lock;
+long thread;
+pthread_t* thread_handles;
 
 int main(int argc, char* argv[]){
-    long thread;
-    pthread_t* thread_handles;
-
     pthread_rwlock_init(&list_rw_lock, NULL);
 
     srand(time(NULL));
 
-    thread_count = strtol(argv[1], NULL, 10);
-    n = strtol(argv[2], NULL, 10);
-    m = strtol(argv[3], NULL, 10);
-    m_member = strtod(argv[4], NULL);
-    m_insert = strtod(argv[5], NULL);
-    m_delete = strtod(argv[6], NULL);
+    int sample_size = strtod(argv[1], NULL);
 
-    num_member = m*m_member;
-    num_insert = m*m_insert;
-    num_delete = m*m_delete;
+    n = 1000;
+    m = 10000;
 
-    num_member_each = num_member/thread_count;
-    num_insert_each = num_insert/thread_count;
-    num_delete_each = num_delete/thread_count;
+    float m_member[] = {0.99, 0.90, 0.50};
+    float m_insert[] = {0.005, 0.05, 0.25};
+    float m_delete[] = {0.005, 0.05, 0.25};
+    int thread_count[] = {1, 2, 4, 8};
 
-    printf("mem: %d, ins:%d, del:%d\n", num_member, num_insert, num_delete);
-    printf("mem_each: %d, ins_each:%d, del_each:%d\n", num_member_each, num_insert_each, num_delete_each);
 
     head_p = malloc(sizeof(struct list_node_s));
     PopulateList(head_p, n);
@@ -56,26 +49,47 @@ int main(int argc, char* argv[]){
     clock_t start_time, end_time;
     double cpu_time_used;
     start_time = clock();// Record the start time
+    FILE *fp;
+    char filename[50];
 
-    thread_handles = malloc(thread_count*sizeof(pthread_t));
-
-    for (thread=0; thread<thread_count; thread++){
-        pthread_create(&thread_handles[thread], NULL, DoOperations, (void*) thread);
+    for (int t=0; t<4; t++){
+        for (int i=0; i<3; i++){
+            num_member = m*m_member[i];
+            num_insert = m*m_insert[i];
+            num_delete = m*m_delete[i];
+            num_member_each = num_member/thread_count[t];
+            num_insert_each = num_insert/thread_count[t];
+            num_delete_each = num_delete/thread_count[t];
+            sprintf(filename, "./output/parallel_rw_lock_case%d_threads%d.csv", i+1, thread_count[t]);
+            fp = fopen(filename,"w");
+            fprintf(fp,"n, time(ms)\n");
+            for (int j=0; j<sample_size; j++){
+                thread_handles = malloc(thread_count[t]*sizeof(pthread_t));
+                start_time = clock();// Record the start time
+                RunPrograme(thread_count[t]);
+                end_time = clock(); // Record the end time
+                cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
+                fprintf(fp,"%d, %f\n", j, cpu_time_used);
+                free(thread_handles);
+            }
+            fclose(fp);
+        }
     }
-
-    for (thread=0; thread<thread_count; thread++){
-        pthread_join(thread_handles[thread], NULL);
-    }
-
-    free(thread_handles);
-
-    end_time = clock(); // Record the end time
-    cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
-    printf("CPU time used: %f seconds\n", cpu_time_used);
 
     pthread_rwlock_destroy(&list_rw_lock);
 
     return 0;
+}
+
+void RunPrograme(int num_threads){
+
+    for (thread=0; thread<num_threads; thread++){
+        pthread_create(&thread_handles[thread], NULL, DoOperations, (void*) thread);
+    }
+
+    for (thread=0; thread<num_threads; thread++){
+        pthread_join(thread_handles[thread], NULL);
+    }
 }
 
 int16_t GetRandomNumber() {
