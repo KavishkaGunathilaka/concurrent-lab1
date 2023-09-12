@@ -32,7 +32,6 @@ int main(int argc, char* argv[]){
 
     int sample_size = strtod(argv[1], NULL);
 
-    struct list_node_s* head_p = malloc(sizeof(struct list_node_s));
     PopulateList(head_p, n);
     // PrintList(head_p);
 
@@ -49,11 +48,13 @@ int main(int argc, char* argv[]){
         fp = fopen(filename,"w");
         fprintf(fp,"n, time(ms)\n");
         for (int j=0; j<sample_size; j++){
+            head_p = malloc(sizeof(struct list_node_s));
             start_time = clock();// Record the start time
             DoOperations();
             end_time = clock(); // Record the end time
             cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
             fprintf(fp,"%d, %f\n", j, cpu_time_used);
+            free(head_p);
         }
         fclose(fp);
     }
