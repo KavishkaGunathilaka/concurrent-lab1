@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
         num_member = m*m_member[i];
         num_insert = m*m_insert[i];
         num_delete = m*m_delete[i];
-        sprintf(filename, "./output/serial_case%d.csv", i);
+        sprintf(filename, "./output/serial_case%d.csv", i+1);
         fp = fopen(filename,"w");
         fprintf(fp,"n, time(ms)\n");
         for (int j=0; j<sample_size; j++){
