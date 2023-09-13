@@ -1,43 +1,68 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
-
-int thread_count;
-int n;
-int16_t m;
-float m_member, m_insert, m_delete;
-
-int16_t GetRandomNumber();
+#include <time.h>
 
 struct list_node_s {
     int data;
     struct list_node_s* next;
 };
 
-int main(int argc, char* argv[]){
-    long thread;
-    pthread_t* thread_handles;
+struct list_node_s* head_p;
+int n;
+int16_t m;
 
+int num_member, num_insert, num_delete;
+
+void DoOperations();
+int16_t GetRandomNumber();
+void PopulateList(struct list_node_s* head_p, int n);
+int Member(int value, struct list_node_s* head_p);
+int Insert(int value, struct list_node_s** head_pp);
+int Delete(int value, struct list_node_s** head_pp);
+
+int main(int argc, char* argv[]){
     srand(time(NULL));
 
-    n = strtol(argv[1], NULL, 10);
-    m = strtol(argv[2], NULL, 10);
-    m_member = strtod(argv[3], NULL);
-    m_insert = strtod(argv[4], NULL);
-    m_delete = strtod(argv[5], NULL);
+    n = 1000;
+    m = 10000;
 
-    int num_member = m*m_member;
-    int num_insert = m*m_insert;
-    int num_delete = m*m_delete;
+    float m_member[] = {0.99, 0.90, 0.50};
+    float m_insert[] = {0.005, 0.05, 0.25};
+    float m_delete[] = {0.005, 0.05, 0.25};
 
-    struct list_node_s* head_p = malloc(sizeof(struct list_node_s));
-    PopulateList(head_p, n);
-    // PrintList(head_p);
+    int sample_size = strtod(argv[1], NULL);
 
     clock_t start_time, end_time;
     double cpu_time_used;
-    start_time = clock();// Record the start time
+    FILE *fp;
+    char filename[50];
 
+    for (int i=0; i<3; i++){
+        num_member = m*m_member[i];
+        num_insert = m*m_insert[i];
+        num_delete = m*m_delete[i];
+        sprintf(filename, "./output/serial_case%d.csv", i+1);
+        fp = fopen(filename,"w");
+        fprintf(fp,"n, time(ms)\n");
+        for (int j=0; j<sample_size; j++){
+            head_p = malloc(sizeof(struct list_node_s));
+            PopulateList(head_p, n);
+            // PrintList(head_p);
+            start_time = clock();// Record the start time
+            DoOperations();
+            end_time = clock(); // Record the end time
+            cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
+            fprintf(fp,"%d, %f\n", j, cpu_time_used);
+            free(head_p);
+        }
+        fclose(fp);
+    }
+
+
+    return 0;
+}
+
+void DoOperations(){
     for (int i=0; i<num_member; i++){
         Member(GetRandomNumber(), head_p);
     }
@@ -49,12 +74,6 @@ int main(int argc, char* argv[]){
     for (int i=0; i<num_delete; i++){
         Delete(GetRandomNumber(), &head_p);
     }
-
-    end_time = clock(); // Record the end time
-    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC; // Calculate time used in seconds
-    printf("CPU time used: %f seconds\n", cpu_time_used);
-
-    return 0;
 }
 
 int16_t GetRandomNumber() {
