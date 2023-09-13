@@ -195,22 +195,25 @@ void DeleteList(struct list_node_s** head_pp){
 
 void* DoOperations(void* rank){
     // Create arrays to store the functions and their respective counts
-     for (int i=0; i<num_member_each; i++){
-        pthread_mutex_lock(&list_mutex);
-        Member(GetRandomNumber(), &head_p);
-        pthread_mutex_unlock(&list_mutex);
-    }
+    int (*functions[])() = {Member, Insert, Delete};
+    int counts[] = {0, 0, 0};
+    int num_each[] = {num_member_each, num_insert_each, num_delete_each};
+    
+    int totalCalls = num_member_each + num_insert_each + num_delete_each; // Set desired total number of calls
+    int remainingCalls = totalCalls;
 
-    for (int i=0; i<num_insert_each; i++){
-        pthread_mutex_lock(&list_mutex);
-        Insert(GetRandomNumber(), &head_p);
-        pthread_mutex_unlock(&list_mutex);
-    }
+    while (remainingCalls > 0) {
+        // Generate a random index to select a function
+        int randomIndex = rand() % 3; // 3 is the number of functions
 
-    for (int i=0; i<num_delete_each; i++){
-        pthread_mutex_lock(&list_mutex);
-        Delete(GetRandomNumber(), &head_p);
-        pthread_mutex_unlock(&list_mutex);
+        // Check if the selected function has been called enough times
+        if (counts[randomIndex] < num_each[randomIndex]) {
+            pthread_mutex_lock(&list_mutex);
+            functions[randomIndex](GetRandomNumber(), &head_p); // Call the function
+            pthread_mutex_unlock(&list_mutex);
+            counts[randomIndex] = counts[randomIndex]+1;   // Increment the count
+            remainingCalls--;
+        }
     }
 
     return NULL;
