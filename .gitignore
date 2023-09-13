@@ -1,5 +1,5 @@
-parrallel_one_mutex
-parrallel_rw_lock
+parallel_one_mutex
+parallel_rw_lock
 serial
 output/
 output.zip
