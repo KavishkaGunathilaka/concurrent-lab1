@@ -19,6 +19,7 @@ void PopulateList(struct list_node_s* head_p, int n);
 int Member(int value, struct list_node_s* head_p);
 int Insert(int value, struct list_node_s** head_pp);
 int Delete(int value, struct list_node_s** head_pp);
+void DeleteList(struct list_node_s** head_pp);
 
 int main(int argc, char* argv[]){
     srand(time(NULL));
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]){
             end_time = clock(); // Record the end time
             cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
             fprintf(fp,"%d, %f\n", j, cpu_time_used);
-            free(head_p);
+            DeleteList(&head_p);
         }
         fclose(fp);
     }
@@ -163,5 +164,16 @@ int Delete(int value, struct list_node_s** head_pp) {
         return 1;
     } else {
         return 0;
+    }
+}
+
+void DeleteList(struct list_node_s** head_pp){
+    struct list_node_s* curr_p = *head_pp;
+    struct list_node_s* next_p = NULL;
+
+    while (curr_p != NULL){
+        next_p = curr_p->next;
+        free(curr_p);
+        curr_p = next_p;
     }
 }

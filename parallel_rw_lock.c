@@ -8,7 +8,6 @@ int16_t m;
 float m_member, m_insert, m_delete;
 int num_member, num_insert, num_delete;
 int num_member_each, num_insert_each, num_delete_each;
-struct list_node_s* head_p ;
 
 struct list_node_s {
     int data;
@@ -21,6 +20,9 @@ int16_t GetRandomNumber();
 void PopulateList(struct list_node_s* head_p, int n);
 int Member(int value, struct list_node_s** head_p);
 int Insert(int value, struct list_node_s** head_pp);
+void DeleteList(struct list_node_s** head_pp);
+
+struct list_node_s* head_p ;
 
 pthread_rwlock_t list_rw_lock;
 long thread;
@@ -43,7 +45,6 @@ int main(int argc, char* argv[]){
 
     clock_t start_time, end_time;
     double cpu_time_used;
-    start_time = clock();// Record the start time
     FILE *fp;
     char filename[50];
 
@@ -68,8 +69,8 @@ int main(int argc, char* argv[]){
                 end_time = clock(); // Record the end time
                 cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
                 fprintf(fp,"%d, %f\n", j, cpu_time_used);
+                DeleteList(&head_p);
                 free(thread_handles);
-                free(head_p);
             }
             fclose(fp);
         }
@@ -181,6 +182,17 @@ int Delete(int value, struct list_node_s** head_pp) {
     }
 }
 
+void DeleteList(struct list_node_s** head_pp){
+    struct list_node_s* curr_p = *head_pp;
+    struct list_node_s* next_p = NULL;
+
+    while (curr_p != NULL){
+        next_p = curr_p->next;
+        free(curr_p);
+        curr_p = next_p;
+    }
+}
+
 void* DoOperations(void* rank){
 
     // Create arrays to store the functions and their respective counts
@@ -203,7 +215,7 @@ void* DoOperations(void* rank){
             }
             functions[randomIndex](GetRandomNumber(), &head_p); // Call the function
             pthread_rwlock_unlock(&list_rw_lock);
-            counts[randomIndex]++;   // Increment the count
+            counts[randomIndex] = counts[randomIndex]+1;   // Increment the count
             remainingCalls--;
         }
     }
