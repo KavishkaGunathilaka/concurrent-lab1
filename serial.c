@@ -32,9 +32,6 @@ int main(int argc, char* argv[]){
 
     int sample_size = strtod(argv[1], NULL);
 
-    PopulateList(head_p, n);
-    // PrintList(head_p);
-
     clock_t start_time, end_time;
     double cpu_time_used;
     FILE *fp;
@@ -44,11 +41,12 @@ int main(int argc, char* argv[]){
         num_member = m*m_member[i];
         num_insert = m*m_insert[i];
         num_delete = m*m_delete[i];
-        sprintf(filename, "./output/serial_case%d.csv", i+1);
+        sprintf(filename, "./output/serial_case%d_threads1.csv", i+1);
         fp = fopen(filename,"w");
         fprintf(fp,"n, time(ms)\n");
         for (int j=0; j<sample_size; j++){
             head_p = malloc(sizeof(struct list_node_s));
+            PopulateList(head_p, n);
             start_time = clock();// Record the start time
             DoOperations();
             end_time = clock(); // Record the end time
