@@ -41,9 +41,6 @@ int main(int argc, char* argv[]){
     float m_delete[] = {0.005, 0.05, 0.25};
     int thread_count[] = {1, 2, 4, 8};
 
-    PopulateList(head_p, n);
-    // PrintList(head_p);
-
     clock_t start_time, end_time;
     double cpu_time_used;
     start_time = clock();// Record the start time
@@ -63,6 +60,8 @@ int main(int argc, char* argv[]){
             fprintf(fp,"n, time(ms)\n");
             for (int j=0; j<sample_size; j++){
                 head_p = malloc(sizeof(struct list_node_s));
+                PopulateList(head_p, n);
+                // PrintList(head_p);
                 thread_handles = malloc(thread_count[t]*sizeof(pthread_t));
                 start_time = clock();// Record the start time
                 RunPrograme(thread_count[t]);
