@@ -29,7 +29,6 @@ long thread;
 pthread_t* thread_handles;
 
 int main(int argc, char* argv[]){
-    pthread_rwlock_init(&list_rw_lock, NULL);
 
     srand(time(NULL));
 
@@ -50,8 +49,6 @@ int main(int argc, char* argv[]){
     RunPrograme(2, 3, sample_size);
     RunPrograme(4, 3, sample_size);
     RunPrograme(8, 3, sample_size);
-    
-    pthread_rwlock_destroy(&list_rw_lock);
 
     return 0;
 }
@@ -76,6 +73,7 @@ void RunPrograme(int num_threads, int case_num, int sample_size){
     fprintf(fp,"n, time(ms)\n");
 
     for (int j=0; j<sample_size; j++){
+        pthread_rwlock_init(&list_rw_lock, NULL);
         
         head_p = malloc(sizeof(struct list_node_s));
         PopulateList(head_p, n);
@@ -95,6 +93,7 @@ void RunPrograme(int num_threads, int case_num, int sample_size){
         double cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
 
         fprintf(fp,"%d, %f\n", j, cpu_time_used);
+        pthread_rwlock_destroy(&list_rw_lock);
         DeleteList(&head_p);
         free(thread_handles);
 
