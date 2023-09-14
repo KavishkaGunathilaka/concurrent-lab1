@@ -221,11 +221,13 @@ void* DoOperations(void* rank){
         if (counts[randomIndex] < num_each[randomIndex]) {
             if (randomIndex == 0){
                 pthread_rwlock_rdlock(&list_rw_lock);
+                functions[randomIndex](GetRandomNumber(), &head_p); // Call the function
+                pthread_rwlock_unlock(&list_rw_lock);
             } else {
                 pthread_rwlock_wrlock(&list_rw_lock);
+                functions[randomIndex](GetRandomNumber(), &head_p); // Call the function
+                pthread_rwlock_unlock(&list_rw_lock);
             }
-            functions[randomIndex](GetRandomNumber(), &head_p); // Call the function
-            pthread_rwlock_unlock(&list_rw_lock);
             counts[randomIndex] = counts[randomIndex]+1;   // Increment the count
             remainingCalls--;
         }
