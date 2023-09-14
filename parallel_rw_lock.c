@@ -14,7 +14,7 @@ struct list_node_s {
     struct list_node_s* next;
 };
 
-void RunPrograme(int num_threads);
+void RunPrograme(int num_threads, int case_num, int sample_size);
 void* DoOperations(void* rank);
 int16_t GetRandomNumber();
 void PopulateList(struct list_node_s* head_p, int n);
@@ -38,58 +38,69 @@ int main(int argc, char* argv[]){
     n = 1000;
     m = 10000;
 
-    float m_member[] = {0.99, 0.90, 0.50};
-    float m_insert[] = {0.005, 0.05, 0.25};
-    float m_delete[] = {0.005, 0.05, 0.25};
-    int thread_count[] = {1, 2, 4, 8};
-
-    clock_t start_time, end_time;
-    double cpu_time_used;
-    FILE *fp;
-    char filename[50];
-
-    for (int t=0; t<4; t++){
-        for (int i=0; i<3; i++){
-            num_member = m*m_member[i];
-            num_insert = m*m_insert[i];
-            num_delete = m*m_delete[i];
-            num_member_each = num_member/thread_count[t];
-            num_insert_each = num_insert/thread_count[t];
-            num_delete_each = num_delete/thread_count[t];
-            sprintf(filename, "./output/parallel_rw_lock_case%d_threads%d.csv", i+1, thread_count[t]);
-            fp = fopen(filename,"w");
-            fprintf(fp,"n, time(ms)\n");
-            for (int j=0; j<sample_size; j++){
-                head_p = malloc(sizeof(struct list_node_s));
-                PopulateList(head_p, n);
-                // PrintList(head_p);
-                thread_handles = malloc(thread_count[t]*sizeof(pthread_t));
-                start_time = clock();// Record the start time
-                RunPrograme(thread_count[t]);
-                end_time = clock(); // Record the end time
-                cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
-                fprintf(fp,"%d, %f\n", j, cpu_time_used);
-                DeleteList(&head_p);
-                free(thread_handles);
-            }
-            fclose(fp);
-        }
-    }
-
+    RunPrograme(1, 1, sample_size);
+    RunPrograme(2, 1, sample_size);
+    RunPrograme(4, 1, sample_size);
+    RunPrograme(8, 1, sample_size);
+    RunPrograme(1, 2, sample_size);
+    RunPrograme(2, 2, sample_size);
+    RunPrograme(4, 2, sample_size);
+    RunPrograme(8, 2, sample_size);
+    RunPrograme(1, 3, sample_size);
+    RunPrograme(2, 3, sample_size);
+    RunPrograme(4, 3, sample_size);
+    RunPrograme(8, 3, sample_size);
+    
     pthread_rwlock_destroy(&list_rw_lock);
 
     return 0;
 }
 
-void RunPrograme(int num_threads){
+void RunPrograme(int num_threads, int case_num, int sample_size){
+    clock_t start_time, end_time;
+    char filename[50];
 
-    for (thread=0; thread<num_threads; thread++){
-        pthread_create(&thread_handles[thread], NULL, DoOperations, (void*) thread);
+    float m_member[] = {0.99, 0.90, 0.50};
+    float m_insert[] = {0.005, 0.05, 0.25};
+    float m_delete[] = {0.005, 0.05, 0.25};
+
+    num_member = m*m_member[case_num-1];
+    num_insert = m*m_insert[case_num-1];
+    num_delete = m*m_delete[case_num-1];
+    num_member_each = num_member/num_threads;
+    num_insert_each = num_insert/num_threads;
+    num_delete_each = num_delete/num_threads;
+
+    sprintf(filename, "./output/parallel_rw_lock_case%d_threads%d.csv", case_num, num_threads);
+    FILE *fp = fopen(filename,"w");
+    fprintf(fp,"n, time(ms)\n");
+
+    for (int j=0; j<sample_size; j++){
+        
+        head_p = malloc(sizeof(struct list_node_s));
+        PopulateList(head_p, n);
+        thread_handles = malloc(num_threads*sizeof(pthread_t));
+
+        start_time = clock();// Record the start time
+
+        for (thread=0; thread<num_threads; thread++){
+            pthread_create(&thread_handles[thread], NULL, DoOperations, (void*) thread);
+        }
+
+        for (thread=0; thread<num_threads; thread++){
+            pthread_join(thread_handles[thread], NULL);
+        }
+
+        end_time = clock(); // Record the end time
+        double cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
+
+        fprintf(fp,"%d, %f\n", j, cpu_time_used);
+        DeleteList(&head_p);
+        free(thread_handles);
+
     }
 
-    for (thread=0; thread<num_threads; thread++){
-        pthread_join(thread_handles[thread], NULL);
-    }
+    fclose(fp);
 }
 
 int16_t GetRandomNumber() {

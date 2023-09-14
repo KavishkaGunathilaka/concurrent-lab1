@@ -13,7 +13,7 @@ int16_t m;
 
 int num_member, num_insert, num_delete;
 
-void DoOperations();
+void RunPrograme(int case_num, int sample_size);
 int16_t GetRandomNumber();
 void PopulateList(struct list_node_s* head_p, int n);
 int Member(int value, struct list_node_s* head_p);
@@ -27,54 +27,66 @@ int main(int argc, char* argv[]){
     n = 1000;
     m = 10000;
 
-    float m_member[] = {0.99, 0.90, 0.50};
-    float m_insert[] = {0.005, 0.05, 0.25};
-    float m_delete[] = {0.005, 0.05, 0.25};
-
     int sample_size = strtod(argv[1], NULL);
 
-    clock_t start_time, end_time;
-    double cpu_time_used;
-    FILE *fp;
-    char filename[50];
-
-    for (int i=0; i<3; i++){
-        num_member = m*m_member[i];
-        num_insert = m*m_insert[i];
-        num_delete = m*m_delete[i];
-        sprintf(filename, "./output/serial_case%d.csv", i+1);
-        fp = fopen(filename,"w");
-        fprintf(fp,"n, time(ms)\n");
-        for (int j=0; j<sample_size; j++){
-            head_p = malloc(sizeof(struct list_node_s));
-            PopulateList(head_p, n);
-            // PrintList(head_p);
-            start_time = clock();// Record the start time
-            DoOperations();
-            end_time = clock(); // Record the end time
-            cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
-            fprintf(fp,"%d, %f\n", j, cpu_time_used);
-            DeleteList(&head_p);
-        }
-        fclose(fp);
-    }
-
+    RunPrograme(1, sample_size);
+    RunPrograme(1, sample_size);
+    RunPrograme(1, sample_size);
+    RunPrograme(1, sample_size);
+    RunPrograme(2, sample_size);
+    RunPrograme(2, sample_size);
+    RunPrograme(2, sample_size);
+    RunPrograme(2, sample_size);
+    RunPrograme(3, sample_size);
+    RunPrograme(3, sample_size);
+    RunPrograme(3, sample_size);
+    RunPrograme(3, sample_size);
 
     return 0;
 }
 
-void DoOperations(){
-    for (int i=0; i<num_member; i++){
-        Member(GetRandomNumber(), head_p);
+void RunPrograme(int case_num, int sample_size){
+    clock_t start_time, end_time;
+    char filename[50];
+
+    float m_member[] = {0.99, 0.90, 0.50};
+    float m_insert[] = {0.005, 0.05, 0.25};
+    float m_delete[] = {0.005, 0.05, 0.25};
+
+    num_member = m*m_member[case_num-1];
+    num_insert = m*m_insert[case_num-1];
+    num_delete = m*m_delete[case_num-1];
+
+    sprintf(filename, "./output/serial_case%d_threads1.csv", case_num);
+    FILE *fp = fopen(filename,"w");
+    fprintf(fp,"n, time(ms)\n");
+
+    for (int j=0; j<sample_size; j++){
+        head_p = malloc(sizeof(struct list_node_s));
+        PopulateList(head_p, n);
+
+        start_time = clock();// Record the start time
+
+        for (int i=0; i<num_member; i++){
+            Member(GetRandomNumber(), head_p);
+        }
+
+        for (int i=0; i<num_insert; i++){
+            Insert(GetRandomNumber(), &head_p);
+        }
+
+        for (int i=0; i<num_delete; i++){
+            Delete(GetRandomNumber(), &head_p);
+        }
+
+        end_time = clock(); // Record the end time
+        double cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
+
+        fprintf(fp,"%d, %f\n", j, cpu_time_used);
+        DeleteList(&head_p);
     }
 
-    for (int i=0; i<num_insert; i++){
-        Insert(GetRandomNumber(), &head_p);
-    }
-
-    for (int i=0; i<num_delete; i++){
-        Delete(GetRandomNumber(), &head_p);
-    }
+    fclose(fp);
 }
 
 int16_t GetRandomNumber() {
