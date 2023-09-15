@@ -21,6 +21,7 @@ void PopulateList(struct list_node_s* head_p, int n);
 int Member(int value, struct list_node_s** head_p);
 int Insert(int value, struct list_node_s** head_pp);
 void DeleteList(struct list_node_s** head_pp);
+int GetRandomIndex(int max_value, int PA, int PB, int PC);
 
 struct list_node_s* head_p ;
 
@@ -31,6 +32,7 @@ pthread_t* thread_handles;
 int main(int argc, char* argv[]){
 
     srand(time(NULL));
+    pthread_rwlock_init(&list_rw_lock, NULL);
 
     int sample_size = strtod(argv[1], NULL);
 
@@ -49,6 +51,8 @@ int main(int argc, char* argv[]){
     RunPrograme(2, 3, sample_size);
     RunPrograme(4, 3, sample_size);
     RunPrograme(8, 3, sample_size);
+
+    pthread_rwlock_destroy(&list_rw_lock);
 
     return 0;
 }
@@ -72,9 +76,7 @@ void RunPrograme(int num_threads, int case_num, int sample_size){
     FILE *fp = fopen(filename,"w");
     fprintf(fp,"n, time(ms)\n");
 
-    for (int j=0; j<sample_size; j++){
-        pthread_rwlock_init(&list_rw_lock, NULL);
-        
+    for (int j=0; j<sample_size; j++){       
         head_p = malloc(sizeof(struct list_node_s));
         PopulateList(head_p, n);
         thread_handles = malloc(num_threads*sizeof(pthread_t));
@@ -93,7 +95,6 @@ void RunPrograme(int num_threads, int case_num, int sample_size){
         double cpu_time_used = ((double) (end_time - start_time)) / (CLOCKS_PER_SEC/1000); // Calculate time used in seconds
 
         fprintf(fp,"%d, %f\n", j, cpu_time_used);
-        pthread_rwlock_destroy(&list_rw_lock);
         DeleteList(&head_p);
         free(thread_handles);
 
@@ -106,6 +107,19 @@ int16_t GetRandomNumber() {
     int16_t max_value = __INT16_MAX__;
     int16_t value = rand() % (max_value + 1);
     return value;
+}
+
+int GetRandomIndex(int max_value, int PA, int PB, int PC) {
+    int randNumber = rand()%max_value+1;
+    if (randNumber <= PA){
+        return 0;
+    }
+
+    if (randNumber <= (PA+PB)){
+        return 1;
+    } else {
+        return 2;
+    }
 }
 
 void PopulateList(struct list_node_s* head_p, int n) {
@@ -215,7 +229,7 @@ void* DoOperations(void* rank){
 
     while (remainingCalls > 0) {
         // Generate a random index to select a function
-        int randomIndex = rand() % 3; // 3 is the number of functions
+        int randomIndex = GetRandomIndex(totalCalls, num_member_each, num_insert_each, num_delete_each);
         // Check if the selected function has been called enough times
         if (counts[randomIndex] < num_each[randomIndex]) {
             if (randomIndex == 0){
